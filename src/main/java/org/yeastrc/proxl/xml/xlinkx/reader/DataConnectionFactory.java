@@ -19,18 +19,9 @@ public class DataConnectionFactory {
      */
     public static Connection getConnectionToDataFile(File dataFile) throws SQLException {
 
-        Connection conn = null;
 
-        try {
-
-            String url = "jdbc:sqlite:" + dataFile.getAbsolutePath();
-            conn = DriverManager.getConnection(url);
-
-        } finally {
-            if (conn != null) {
-                conn.close();
-            }
-        }
+        String url = "jdbc:sqlite:" + dataFile.getAbsolutePath();
+        Connection conn = DriverManager.getConnection(url);
 
         return conn;
     }

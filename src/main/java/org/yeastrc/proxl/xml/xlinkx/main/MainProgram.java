@@ -116,7 +116,12 @@ public class MainProgram implements Runnable {
 
         	System.out.println( "\nError encountered:" );
         	System.out.println( t.getMessage() );
-        	System.exit( 1 );
+
+        	if( verboseRequested ) {
+				t.printStackTrace();
+			}
+
+        	System.exit(1);
 
 		}
 	}

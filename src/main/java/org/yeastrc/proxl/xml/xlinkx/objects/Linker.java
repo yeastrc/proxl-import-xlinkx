@@ -5,6 +5,19 @@ import java.util.HashSet;
 import java.util.List;
 
 public class Linker {
+    @Override
+    public String toString() {
+        return "Linker{" +
+                "crosslinkMasses=" + crosslinkMasses +
+                ", cleavedCrosslinkMasses=" + cleavedCrosslinkMasses +
+                ", monolinkMasses=" + monolinkMasses +
+                ", name='" + name + '\'' +
+                ", isCleavable=" + isCleavable +
+                ", linkerEnds=" + linkerEnds +
+                ", formula='" + formula + '\'' +
+                '}';
+    }
+
     public Linker(Collection<Double> crosslinkMasses, Collection<Double> cleavedCrosslinkMasses, Collection<Double> monolinkMasses, String name, boolean isCleavable, List<LinkerEnd> linkerEnds, String formula) {
         this.crosslinkMasses = crosslinkMasses;
         this.cleavedCrosslinkMasses = cleavedCrosslinkMasses;

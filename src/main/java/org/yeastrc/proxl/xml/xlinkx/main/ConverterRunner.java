@@ -1,6 +1,8 @@
 package org.yeastrc.proxl.xml.xlinkx.main;
 
+import org.yeastrc.proxl.xml.xlinkx.objects.Linker;
 import org.yeastrc.proxl.xml.xlinkx.reader.DataConnectionFactory;
+import org.yeastrc.proxl.xml.xlinkx.reader.LinkerLoader;
 
 import java.io.File;
 import java.sql.Connection;
@@ -11,6 +13,9 @@ public class ConverterRunner {
 
         // get a connection to the sqlite data file
         Connection dataConnection = DataConnectionFactory.getConnectionToDataFile(dataFile);
+
+        // load the linker
+        Linker linker = LinkerLoader.loadLinker( dataConnection );
 
 
 //		XMLBuilder builder = new XMLBuilder();
