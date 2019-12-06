@@ -16,6 +16,8 @@ public class ConverterRunner {
 
         // load the linker
         Linker linker = LinkerLoader.loadLinker( dataConnection );
+        System.out.println("\tLinker: " + linker);
+
 
 
 //		XMLBuilder builder = new XMLBuilder();

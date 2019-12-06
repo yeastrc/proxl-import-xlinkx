@@ -20,8 +20,8 @@ package org.yeastrc.proxl.xml.xlinkx.constants;
 
 public class SearchConstants {
 
-	public static final String SEARCH_PROGRAM_NAME_METAMORPH = "Proteome Discoverer/XlinkX";
-	
+	public static final String SEARCH_PROGRAM_NAME_PROTEOME_DISCOVERER = "Proteome Discoverer";
+	public static final String SEARCH_PROGRAM_NAME_XLINKX = "Xlinkx";
 	
 	public static final int LINK_TYPE_CROSSLINK = 0;
 	public static final int LINK_TYPE_LOOPLINK = 1;
