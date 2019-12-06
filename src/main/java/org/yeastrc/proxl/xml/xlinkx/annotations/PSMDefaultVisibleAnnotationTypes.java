@@ -37,14 +37,14 @@ public class PSMDefaultVisibleAnnotationTypes {
 		{
 			SearchAnnotation annotation = new SearchAnnotation();
 			annotation.setAnnotationName( PSMAnnotationTypes.METAMORPH_ANNOTATION_TYPE_QVALUE);
-			annotation.setSearchProgram( SearchConstants.SEARCH_PROGRAM_NAME_METAMORPH );
+			annotation.setSearchProgram( SearchConstants.SEARCH_PROGRAM_NAME_XLINKX );
 			annotations.add( annotation );
 		}
 
 		{
 			SearchAnnotation annotation = new SearchAnnotation();
 			annotation.setAnnotationName( PSMAnnotationTypes.METAMORPH_ANNOTATION_TYPE_SCORE );
-			annotation.setSearchProgram( SearchConstants.SEARCH_PROGRAM_NAME_METAMORPH );
+			annotation.setSearchProgram( SearchConstants.SEARCH_PROGRAM_NAME_XLINKX );
 			annotations.add( annotation );
 		}
 		

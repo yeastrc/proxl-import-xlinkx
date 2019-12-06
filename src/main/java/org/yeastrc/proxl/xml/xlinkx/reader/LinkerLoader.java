@@ -12,13 +12,10 @@ import org.yeastrc.proxl.xml.xlinkx.objects.LinkerEnd;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
 import java.io.StringReader;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -79,55 +76,45 @@ public class LinkerLoader {
      * Get the linkable ends of this cross-linker.
      *
      * In my testing, it looks as though XlinkX only defines a single linkable end--that is both
-     * ends of the cross-linker have exactly the same reactivity. So, I read the first instance of
-     * a modification_site in the labile_crosslinker element and use that for both ends.
+     * ends of the cross-linker have exactly the same reactivity.
      *
-     * Also assume that there is only one residue listed.
+     * TODO: Need to test this wit a c-terminal linker to confirm c-terminal is not an option
+     *
      * @param linkerNode
      * @return
      */
     public static List<LinkerEnd> getLinkerEnds(Node linkerNode, Connection dataConnection) throws Exception {
 
         List<LinkerEnd> linkerEnds = new ArrayList<>();
+        Collection<String> linkedResidues = new ArrayList<>(1);
+
+        boolean nTermLinkable = linkerLinksNTerm(dataConnection);
 
         NodeList nodeList = linkerNode.getChildNodes();
         for( int i = 0; i < nodeList.getLength(); i++ ) {
             Node childNode = nodeList.item(i);
             if( childNode.getNodeName().equals( "modification_site" ) ) {
-                Collection<String> linkedResidues = new ArrayList<>(1);
-                linkedResidues.add(childNode.getAttributes().getNamedItem("site").getNodeValue());
-
-                boolean nTermLinkable = linkerLinksNTerm(dataConnection);
-
-                linkerEnds.add( new LinkerEnd(linkedResidues, nTermLinkable, false) );
-                linkerEnds.add( new LinkerEnd(linkedResidues, nTermLinkable, false) );
+                if(childNode.getAttributes().getNamedItem("site") != null)
+                    linkedResidues.add(childNode.getAttributes().getNamedItem("site").getNodeValue());
             }
         }
+
+        linkerEnds.add(new LinkerEnd(linkedResidues, nTermLinkable, false));
 
         return linkerEnds;
     }
 
     public static boolean linkerLinksNTerm(Connection dataConnection) throws Exception {
 
-        String xml = getWorkflowXML(dataConnection);
-
-        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-                .newInstance();
-        DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-        InputSource is = new InputSource(new StringReader(xml));
-        Document document = docBuilder.parse(is);
-
-        NodeList nodeList = document.getElementsByTagName("WorkflowNode");
-        for( int i = 0; i < nodeList.getLength(); i++ ) {
-            Node node = nodeList.item(i);
-            if(node.getAttributes().getNamedItem("ProcessingNodeName") != null &&
-                    node.getAttributes().getNamedItem("ProcessingNodeName").getNodeValue().equals( "HlxlDetect" )) {
-                return getIsNTermInfoFromXMLProcessingNode(node);
-            }
-
+        List<Element> nodes = WorkflowUtils.getWorkflowNodes( "HlxlDetect", dataConnection );
+        if( nodes.size() < 1 ) {
+            throw new Exception("Did not find a node corresponding to HlxlDetect...");
+        }
+        if( nodes.size() > 1) {
+            throw new Exception("Only expected one node corresponding to HlxlDetect...");
         }
 
-        throw new Exception("Unable to find workflow node corresponding to HlxlDetect...");
+        return getIsNTermInfoFromXMLProcessingNode(nodes.get(0));
     }
 
     public static boolean getIsNTermInfoFromXMLProcessingNode(Node processingNode) throws Exception {
@@ -150,32 +137,6 @@ public class LinkerLoader {
         throw new Exception("Unable to determine if linker is linking n-terminus.");
     }
 
-
-    /**
-     * Get the workflow information for these data. Note: it is assumed there is only one defined workflow
-     * in this data file!
-     *
-     * @param dataConnection
-     * @return
-     */
-    public static String getWorkflowXML(Connection dataConnection) throws Exception {
-
-        String sql = "SELECT WorkflowXML FROM " + DBConstants.TBL_WORKFLOWS;
-        String xml = null;
-
-        try(PreparedStatement pstmt = dataConnection.prepareStatement( sql ) ) {
-            ResultSet rs = pstmt.executeQuery();
-
-            rs.next();
-            xml = rs.getString(1);
-
-            if(rs.next()) {
-                throw new Exception("Got more than one row in " + DBConstants.TBL_WORKFLOWS + ". Only expecting one.");
-            }
-        }
-
-        return xml;
-    }
 
     public static String getFormula(String messyFormula) throws Exception {
         Pattern p = Pattern.compile("^(\\w+)\\((.+)\\)$");

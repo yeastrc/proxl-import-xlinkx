@@ -39,7 +39,7 @@ public class PSMAnnotationTypes {
 	public static List<FilterablePsmAnnotationType> getFilterablePsmAnnotationTypes( String programName ) {
 		List<FilterablePsmAnnotationType> types = new ArrayList<FilterablePsmAnnotationType>();
 
-		if( programName.equals( SearchConstants.SEARCH_PROGRAM_NAME_METAMORPH ) ) {
+		if( programName.equals( SearchConstants.SEARCH_PROGRAM_NAME_XLINKX ) ) {
 			{
 				FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 				type.setName( METAMORPH_ANNOTATION_TYPE_SCORE );

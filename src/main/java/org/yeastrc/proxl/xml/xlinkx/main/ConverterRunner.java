@@ -2,6 +2,7 @@ package org.yeastrc.proxl.xml.xlinkx.main;
 
 import org.yeastrc.proxl.xml.xlinkx.objects.Linker;
 import org.yeastrc.proxl.xml.xlinkx.reader.DataConnectionFactory;
+import org.yeastrc.proxl.xml.xlinkx.reader.ExperimentalParameterLookupUtils;
 import org.yeastrc.proxl.xml.xlinkx.reader.LinkerLoader;
 
 import java.io.File;
@@ -18,7 +19,9 @@ public class ConverterRunner {
         Linker linker = LinkerLoader.loadLinker( dataConnection );
         System.out.println("\tLinker: " + linker);
 
-
+        System.out.println(ExperimentalParameterLookupUtils.getPercolatorVersion(dataConnection));
+        System.out.println(ExperimentalParameterLookupUtils.getProteomeDiscovererVersion(dataConnection));
+        System.out.println(ExperimentalParameterLookupUtils.getXlinkxVersion(dataConnection));
 
 //		XMLBuilder builder = new XMLBuilder();
 //		builder.buildAndSaveXML(analysis, outFile );
