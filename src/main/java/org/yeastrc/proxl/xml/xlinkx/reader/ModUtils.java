@@ -10,6 +10,8 @@ import java.sql.SQLException;
 
 public class ModUtils {
 
+
+
     public static BigDecimal getModMassForModName(String name, Connection dataConnection) throws Exception {
 
         String sql = "SELECT DeltaMonoisotopicMass FROM " + DBConstants.TBL_MOD_LOOKUP_TABLE + " WHERE Name = ?";
