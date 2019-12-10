@@ -13,11 +13,8 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.yeastrc.proxl.xml.xlinkx.reader.LinkerLoader.getIsNTermInfoFromXMLProcessingNode;
 
 public class WorkflowUtils {
 

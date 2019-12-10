@@ -16,6 +16,7 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +25,13 @@ import java.util.regex.Pattern;
 
 public class LinkerLoader {
 
+    /**
+     * Return the Linker used in this search as defined in the search.
+     *
+     * @param dataConnection
+     * @return
+     * @throws Exception
+     */
     public static Linker loadLinker(Connection dataConnection) throws Exception {
 
         String linkerXML = getLinkerXMLStringFromDataFile(dataConnection);
@@ -58,13 +66,13 @@ public class LinkerLoader {
         String formula = getFormula(linkerNode.getAttributes().getNamedItem("composition").getNodeValue());
 
         Collection<Double> linkerMasses = new ArrayList<>(1);
-        linkerMasses.add( ModUtils.getModMassForModName(linkerName, dataConnection).doubleValue() );
+        linkerMasses.add( ModDBLookupUtils.getModMassForModName(linkerName, dataConnection).doubleValue() );
 
         linkerBuilder.setCrosslinkMasses(linkerMasses);
         linkerBuilder.setFormula(formula);
         linkerBuilder.setIsCleavable(cleavable);
         linkerBuilder.setName(linkerName);
-        linkerBuilder.setLinkerEnds(getLinkerEnds(linkerNode, dataConnection));
+        linkerBuilder.setLinkerEnds(getLinkerEnds(linkerName, linkerNode, dataConnection));
 
         Linker linker = linkerBuilder.createLinker();
         System.out.println(linker);
@@ -78,17 +86,16 @@ public class LinkerLoader {
      * In my testing, it looks as though XlinkX only defines a single linkable end--that is both
      * ends of the cross-linker have exactly the same reactivity.
      *
-     * TODO: Need to test this wit a c-terminal linker to confirm c-terminal is not an option
-     *
      * @param linkerNode
      * @return
      */
-    public static List<LinkerEnd> getLinkerEnds(Node linkerNode, Connection dataConnection) throws Exception {
+    public static List<LinkerEnd> getLinkerEnds(String linkerName, Node linkerNode, Connection dataConnection) throws Exception {
 
         List<LinkerEnd> linkerEnds = new ArrayList<>();
         Collection<String> linkedResidues = new ArrayList<>(1);
 
-        boolean nTermLinkable = linkerLinksNTerm(dataConnection);
+        boolean nTermLinkable = linkerLinksNTerm(linkerName, dataConnection);
+        boolean cTermLinkable = linkerLinksCTerm(linkerName, dataConnection);
 
         NodeList nodeList = linkerNode.getChildNodes();
         for( int i = 0; i < nodeList.getLength(); i++ ) {
@@ -99,44 +106,65 @@ public class LinkerLoader {
             }
         }
 
-        linkerEnds.add(new LinkerEnd(linkedResidues, nTermLinkable, false));
+        // both linker ends are the same
+        linkerEnds.add(new LinkerEnd(linkedResidues, nTermLinkable, cTermLinkable));
+        linkerEnds.add(new LinkerEnd(linkedResidues, nTermLinkable, cTermLinkable));
 
         return linkerEnds;
     }
 
-    public static boolean linkerLinksNTerm(Connection dataConnection) throws Exception {
-
-        List<Element> nodes = WorkflowUtils.getWorkflowNodes( "HlxlDetect", dataConnection );
-        if( nodes.size() < 1 ) {
-            throw new Exception("Did not find a node corresponding to HlxlDetect...");
-        }
-        if( nodes.size() > 1) {
-            throw new Exception("Only expected one node corresponding to HlxlDetect...");
-        }
-
-        return getIsNTermInfoFromXMLProcessingNode(nodes.get(0));
+    public static boolean linkerLinksNTerm(String linkerName, Connection dataConnection) throws Exception {
+        return haveNTermLinksForLinker(linkerName, dataConnection);
     }
 
-    public static boolean getIsNTermInfoFromXMLProcessingNode(Node processingNode) throws Exception {
-
-        NodeList nodeList = ((Element)(processingNode)).getElementsByTagName("ProcessingNodeParameter");
-        for( int i = 0; i < nodeList.getLength(); i++ ) {
-            Node subNode = nodeList.item(i);
-            if(subNode.getAttributes().getNamedItem("Name") != null &&
-                subNode.getAttributes().getNamedItem("Name").getNodeValue().equals( "EnableProteinNterm" )) {
-
-                String val = subNode.getTextContent();
-                if( val.equals( "True" )) {
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        throw new Exception("Unable to determine if linker is linking n-terminus.");
+    public static boolean linkerLinksCTerm(String linkerName, Connection dataConnection) throws Exception {
+        return haveCTermLinksForLinker(linkerName, dataConnection);
     }
 
+    /**
+     * The safest means of determining if a linker may link the n/c terminus is to actually check if we
+     * have results corresponding to n or c terminal linkages...
+     *
+     * @param linker
+     * @param dataConnection
+     * @return
+     * @throws SQLException
+     */
+    public static boolean haveNTermLinksForLinker(String linker, Connection dataConnection) throws SQLException {
+        String sql = "SELECT ID FROM " + DBConstants.TBL_MS2_PSM_TABLE + " WHERE ModificationsA LIKE '%NTERM(" + linker + ")%' OR ModificationsB LIKE '%NTERM(" + linker + ")%' LIMIT 1";
+        System.out.println(sql);
+
+        try(PreparedStatement pstmt = dataConnection.prepareStatement( sql ) ) {
+            ResultSet rs = pstmt.executeQuery();
+
+            if(rs.next())
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * The safest means of determining if a linker may link the n/c terminus is to actually check if we
+     * have results corresponding to n or c terminal linkages...
+     *
+     * @param linker
+     * @param dataConnection
+     * @return
+     * @throws SQLException
+     */
+    public static boolean haveCTermLinksForLinker(String linker, Connection dataConnection) throws SQLException {
+        String sql = "SELECT ID FROM " + DBConstants.TBL_MS2_PSM_TABLE + " WHERE ModificationsA LIKE '%CTERM(" + linker + ")%' OR ModificationsB LIKE '%CTERM(\" + linker + \")%' LIMIT 1";
+
+        try(PreparedStatement pstmt = dataConnection.prepareStatement( sql ) ) {
+            ResultSet rs = pstmt.executeQuery();
+
+            if(rs.next())
+                return true;
+        }
+
+        return false;
+    }
 
     public static String getFormula(String messyFormula) throws Exception {
         Pattern p = Pattern.compile("^(\\w+)\\((.+)\\)$");
